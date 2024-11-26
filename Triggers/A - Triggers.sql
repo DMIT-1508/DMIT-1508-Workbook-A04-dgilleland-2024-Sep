@@ -1,5 +1,27 @@
 -- Triggers Samples
-USE [A0X-School]
+/* Notes:
+    Triggers are a special kind of stored procedure. These triggers run only in
+    response to a DML statement (INSERT | UPDATE | DELETE).
+    The purpose of triggers is to act as a last-moment opportunity to do something
+    before the DML statement is finalized. Typically we use triggers to accomplish
+    some complex types of validation of the changes to the data in our database.
+
+    Triggers are not called directly from "outside" the database server (like regular
+    stored prodedures are). Rather, they are called internally by the database server
+    at the end of its doing the DML statement.
+
+    Inside of the trigger, it's important to know that the code is executing within
+    the context of that "mini" Transaction that the database server started when it
+    began the DML statement. That means, in our validation we might want to do, we
+    have an opportunity to ROLLBACK TRANSACTION and undo the changes.
+
+    How does the database server know what changes to "undo"? It knows because during
+    the DML statement, it sets up two additional tables - called "inserted" and "deleted"
+    - where it stored the "old" information ("deleted" table) and the "new" information
+    ("inserted" table). These two tables will have the exact same schema (column names
+    and data types) as the table they are "attached" to.
+*/
+USE [A04-School]
 GO
 SELECT DB_NAME() AS 'Active Database'
 GO
