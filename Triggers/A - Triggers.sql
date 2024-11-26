@@ -148,7 +148,7 @@ UPDATE Course SET CourseCost = 1000 -- This should fail
 UPDATE Course SET CourseCost = CourseCost * 1.21
 UPDATE Course SET CourseCost = CourseCost * 1.195
 
--- 3. Too many students owe us money and keep registering for more courses! Create a trigger to ensure that a student cannot register for any more courses if they have a balance owing of more than $5000.
+-- 3. Too many students owe us money and keep registering for more courses! Create a trigger to ensure that a student cannot register for any more courses if they have a balance owing of more than $2800.
 -- Q) What table should the trigger belong to?
 -- Q) What DML statement(s) should launch the trigger?
 GO
@@ -169,7 +169,7 @@ AS
        -- with the Student table to see the balance for the new students
        EXISTS(SELECT S.StudentID FROM inserted AS I -- the new data in the Registration table
               INNER JOIN Student AS S ON I.StudentID = S.StudentID
-              WHERE S.BalanceOwing > 5000)
+              WHERE S.BalanceOwing > 2800)
     BEGIN
         RAISERROR('Student owes too much money - cannot register student in course', 16, 1)
         ROLLBACK TRANSACTION
@@ -187,6 +187,8 @@ FROM    sys.triggers AS tr
 
 
 -- 3.b. Write code to test this trigger by creating a stored procedure called RegisterStudent that a) puts a student in a course and then b) increases the balance owing by the cost of the course.
+--      Then, you will be testing the trigger by calling RegisterStudent repeatedly
+--      to add a particular student to a whole bunch of courses (one at a time).
 -- sp_help Registration
 SELECT * FROM Student WHERE BalanceOwing > 0
 GO
