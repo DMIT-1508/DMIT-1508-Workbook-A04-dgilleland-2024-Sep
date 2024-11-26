@@ -52,9 +52,11 @@ AS
 RETURN
 GO
 -- Demonstrate the diagnostic trigger
-SELECT * FROM Activity
+SELECT * FROM Activity ORDER BY ClubId
 SELECT * FROM Club
 -- Note to self: make sure you have the CIPS club from the INSERT demo
+-- I need someone to add to the CIPS club
+-- SELECT * FROM Student WHERE StudentID = 200494476
 INSERT INTO Activity(StudentID, ClubId) VALUES (200494476, 'CIPS')
 -- (note: generally, it's not a good idea to change a primary key, even part of one)
 UPDATE Activity SET ClubId = 'NASA1' WHERE StudentID = 200494476
@@ -96,7 +98,8 @@ FROM sys.triggers AS tr
 
 -- Before doing my tests, examine the data in the table
 -- to see what I could use for testing purposes
-SELECT * FROM Activity -- Then I picked student 200495500
+SELECT * FROM Activity ORDER BY StudentID
+-- Then I picked student 200495500
 SELECT StudentID, FirstName, LastName FROM Student WHERE StudentID = 200495500 -- This is Robert Smith
 
 -- The following test should result in a rollback.
@@ -114,6 +117,7 @@ VALUES (200122100, 'CIPS'), -- Peter Codd   -- New to the Activity table
        (200978400, 'CIPS'), -- Peter Pan    -- New to the Activity table
        (200688700, 'CIPS')  -- Robbie Chan  -- New to the Activity table
       ,(200495500, 'CIPS')  -- Robert Smith -- This would be his 4th club!
+-- SELECT * FROM Activity ORDER BY StudentID
 
 -- 2. The Education Board is concerned with rising course costs! Create a trigger to ensure that a course cost does not get increased by more than 20% at any one time.
 -- Our first question is, What table should the trigger belong to?
