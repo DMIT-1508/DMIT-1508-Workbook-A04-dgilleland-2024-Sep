@@ -1,6 +1,6 @@
 /* Answers to Practice Triggers Questions
  *************************************************/
-USE [A0X-School]
+USE [A04-School]
 GO
 SELECT DB_NAME() AS 'Active Database'
 GO
@@ -68,6 +68,7 @@ EXEC RegisterStudent 200494476, 'DMIT115', '2024S'
 -- check balance...
 SELECT [StudentID],[FirstName],[LastName],[BalanceOwing]
 FROM Student WHERE StudentID = 200494476
+
 EXEC RegisterStudent 200494476, 'DMIT152', '2024S'
 EXEC RegisterStudent 200494476, 'DMIT163', '2024S'
 -- THIS ONE should trigger the rejection
