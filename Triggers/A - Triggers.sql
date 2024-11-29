@@ -207,18 +207,37 @@ AS
                       -- are the composite key columns in the table.
                       -- If there were other columns beside the composite PK,
                       -- then I could isolate my IF check by adding the following:
-                      --   AND (Update(StudentID) OR Update(ClubId))
+                        AND (Update(StudentID) OR Update(ClubId))
     BEGIN
         RAISERROR('Modifications to the composite primary key of Activity are not allowed', 16, 1)
         ROLLBACK TRANSACTION
     END
 RETURN
 GO
+/* Testing
+   SELECT * FROM Activity ORDER BY ClubID
+    UPDATE Activity
+    SET     ClubId = 'NASA1'
+    WHERE   ClubId = 'CHESS' AND StudentID = 200495500
+*/
 
 -- 5. The school has placed a temporary hold on the creation of any more clubs. (Existing clubs can be renamed or removed, but no additional clubs can be created.) Put a trigger on the Clubs table to prevent any new clubs from being created.
 -- TODO: Student Answer Here
-
-
+CREATE OR ALTER TRIGGER Clubs_StopInserts
+ON Club
+FOR INSERT
+AS
+    IF @@ROWCOUNT > 0
+    BEGIN
+        RAISERROR('Adding new clubs is temporarily disabled', 16, 1)
+        ROLLBACK TRANSACTION
+    END
+GO
+INSERT INTO Club(ClubName, ClubId)
+VALUES ('Better Results in Basic Education', 'BRIBE')
+INSERT INTO Club(ClubName, ClubId)
+VALUES ('Knitting for Programmers', 'KFP')
+GO
 -- 6. Our school DBA has suddenly disabled some Foreign Key constraints to deal with performance issues! Create a trigger on the Registration table to ensure that only valid CourseIDs, StudentIDs and StaffIDs are used for grade records. (You can use sp_help tablename to find the name of the foreign key constraints you need to disable to test your trigger.) Have the trigger raise an error for each foreign key that is not valid. If you have trouble with this question create the trigger so it just checks for a valid student ID.
 -- sp_help Registration -- then disable the foreign key constraints....
 ALTER TABLE Registration NOCHECK CONSTRAINT FK_GRD_CRS_CseID
@@ -240,22 +259,28 @@ AS
         -- has changed).
         DECLARE @LocalError bit = 0
 
-        IF UPDATE(StudentID) AND
-           NOT EXISTS (SELECT * FROM inserted AS I INNER JOIN Student AS S ON I.StudentID = S.StudentID)
+        IF  UPDATE(StudentID) AND
+            EXISTS (SELECT * FROM inserted AS I 
+                    LEFT OUTER JOIN Student AS S ON I.StudentID = S.StudentID
+                    WHERE S.StudentID IS NULL)
         BEGIN
             RAISERROR('That is not a valid StudentID', 16, 1)
             SET @LocalError = 1
         END
 
-        IF UPDATE(CourseID) AND
-           NOT EXISTS (SELECT * FROM inserted AS I INNER JOIN Course AS C ON I.CourseId = C.CourseId)
+        IF  UPDATE(CourseID) AND
+            EXISTS (SELECT * FROM inserted AS I 
+                    LEFT OUTER JOIN Course AS C ON I.CourseId = C.CourseId
+                    WHERE C.CourseId IS NULL)
         BEGIN
             RAISERROR('That is not a valid CourseID', 16, 1)
             SET @LocalError = 1
         END
 
-        IF UPDATE(StaffID) AND
-           NOT EXISTS (SELECT * FROM inserted AS I INNER JOIN Staff AS S ON I.StaffID = S.StaffID)
+        IF  UPDATE(StaffID) AND
+            EXISTS (SELECT * FROM inserted AS I
+                    LEFT OUTER JOIN Staff AS S ON I.StaffID = S.StaffID
+                    WHERE S.StaffID IS NULL)
         BEGIN
             RAISERROR('That is not a valid StaffID', 16, 1)
             SET @LocalError = 1
@@ -271,6 +296,13 @@ GO
 
 -- How would you test the trigger?
 -- TODO: Student Answer Here...
+SELECT StudentID, CourseID, StaffID, Semester FROM Registration
+-- Test for Bad data
+INSERT INTO Registration(StudentID, CourseId, StaffID, Semester)
+VALUES (199899200, 'PROG123', 300, '2025J')
+
+
+GO
 
 -- 7. Our network security officer suspects our system has a virus that is allowing students to alter their balance owing records! In order to track down what is happening we want to create a logging table that will log any changes to the balance owing in the Student table. You must create the logging table and the trigger to populate it when the balance owing is modified.
 -- Step 1) Make the logging table
