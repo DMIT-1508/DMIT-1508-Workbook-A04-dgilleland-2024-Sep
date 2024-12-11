@@ -160,14 +160,34 @@ AS
     END
 RETURN
 GO
+-- We can explore what data is available in our database to build up some test data
+SELECT * FROM Course
+    -- Let's use 'DMIT259'
+SELECT * FROM Student
+    -- Let's use 200122100, 200011730, and 199912010
+SELECT * FROM Staff
+    -- Let's use 1 - Donna Bookem
+UPDATE Student SET BalanceOwing = 0; -- to clean up any potential problems of registering our students....
 
+
+INSERT INTO Registration(CourseId, StudentID, Semester, StaffID)
+VALUES  ('DMIT259',200122100,'2024S',1)
+INSERT INTO Registration(CourseId, StudentID, Semester, StaffID)
+VALUES  ('DMIT259',200011730,'2024S',1)
+-- The next one should be one too many
+INSERT INTO Registration(CourseId, StudentID, Semester, StaffID)
+VALUES  ('DMIT259',199912010,'2024S',1)
+SELECT * FROM REGISTRATION WHERE CourseId = 'DMIT259' AND Semester = '2024S'
+-- Here we can cleanup
+DELETE FROM REGISTRATION WHERE CourseId = 'DMIT259' AND Semester = '2024S'
+GO
 -- 11. Change the Registration_ClassSizeLimit trigger so students will be added to a wait list if the course is already full; make sure the student is not added to Registration, and include a message that the student has been added to a waitlist. You should design a WaitList table to accommodate the changes needed for adding a student to the course once space is freed up for the course. Students should be added on a first-come-first-served basis (i.e. - include a timestamp in your WaitList table)
 -- Step 1) Make the WaitList table
 DROP TABLE IF EXISTS WaitList
 GO
 CREATE TABLE WaitList
 (
-    LogID           int  IDENTITY (1,1) NOT NULL CONSTRAINT PK_BalanceOwingLog PRIMARY KEY,
+    LogID           int  IDENTITY (1,1) NOT NULL CONSTRAINT PK_WaitListLogID PRIMARY KEY,
     StudentID       int                 NOT NULL,
     CourseID        char(7)             NOT NULL,
     Semester        char(5)             NOT NULL,
@@ -193,9 +213,19 @@ AS
         INSERT INTO WaitList(StudentID, CourseID, Semester, AddedOn)
         SELECT StudentID, CourseID, Semester, GETDATE()
         FROM   inserted
-        ROLLBACK TRANSACTION
+        
+        DELETE R FROM Registration AS R
+        INNER JOIN inserted AS I 
+            ON  I.StudentID = R.StudentID 
+            AND I.CourseId = R.CourseId 
+            AND I.Semester = R.Semester
     END
 RETURN
 GO
+-- Let's try adding that last student again
+INSERT INTO Registration(CourseId, StudentID, Semester, StaffID)
+VALUES  ('DMIT259',199912010,'2024S',1)
+
+SELECT * FROM WaitList
 
 -- 12. (Advanced) Create a trigger called Registration_AutomaticEnrollment that will add students from the wait list of a course whenever another student withdraws from that course. Pull your students from the WaitList table on a first-come-first-served basis.
